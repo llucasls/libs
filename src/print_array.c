@@ -2,12 +2,10 @@
 
 #include <print_array.h>
 
-void print_array(char *array[], char *name) {
-	if (name != NULL)
-		printf("%s: ", name);
-	printf("{");
-
+void print_array(char *array[]) {
 	int index = 0;
+
+	printf("{");
 	while(array[index + 1] != NULL) {
 		printf("\"%s\", ", array[index]);
 		index++;
