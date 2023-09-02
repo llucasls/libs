@@ -1,32 +1,49 @@
-SRC := src
-LIB := lib
-HEADERS := $(CURDIR)/headers
+include config.mk
 
 CC     = gcc
 CFLAGS = -Wall -Wextra -Werror
 
-STATIC_FLAGS  = -c -I$(HEADERS)
-DYNAMIC_FLAGS = -shared -fPIC -I$(HEADERS)
+STATIC_FLAGS  = -c
+DYNAMIC_FLAGS = -shared -fPIC
 
-OBJECTS        = $(patsubst $(SRC)/%.c,$(LIB)/%.o,$(wildcard $(SRC)/*.c))
-SHARED_OBJECTS = $(patsubst $(SRC)/%.c,$(LIB)/lib%.so,$(wildcard $(SRC)/*.c))
+SRC_FILES = $(wildcard src/*.c)
 
-all: static dynamic
+STATIC_OBJECTS = $(SRC_FILES:src/%.c=lib/%.o)
+SHARED_OBJECTS = $(SRC_FILES:src/%.c=lib/lib%.so)
 
-static: $(OBJECTS)
+OBJECTS := $(patsubst lib/%,$(LIB_DIR)/%,$(wildcard lib/*))
+
+all: dynamic
+
+install: all headers libraries
+
+headers: $(HEADERS)
+
+libraries: $(OBJECTS)
+
+static: $(STATIC_OBJECTS)
 
 dynamic: $(SHARED_OBJECTS)
 
-$(LIB)/%.o: $(SRC)/%.c
+$(HEADERS): $(HEADERS_DIR)/%: headers/% | $(HEADERS_DIR)
+	install $(GROUP) -m 644 $< $@
+
+$(OBJECTS): $(LIB_DIR)/%: lib/%
+	install $(GROUP) -m $(call GET_MODE,$@) -D $< $@
+
+$(STATIC_OBJECTS): lib/%.o: src/%.c
 	$(CC) $(CFLAGS) $(STATIC_FLAGS) -o $@ $<
 
-$(LIB)/lib%.so: $(SRC)/%.c
+$(SHARED_OBJECTS): lib/lib%.so: src/%.c
 	$(CC) $(CFLAGS) $(DYNAMIC_FLAGS) -o $@ $<
 
+$(HEADERS_DIR):
+	install $(GROUP) -m 775 -d $@
+
 clean:
-	if test -n "$(OBJECTS)"; then rm -f $(OBJECTS); fi
+	if test -n "$(STATIC_OBJECTS)"; then rm -f $(STATIC_OBJECTS); fi
 	if test -n "$(SHARED_OBJECTS)"; then rm -f $(SHARED_OBJECTS); fi
 
-.PHONY: all static dynamic clean
+.PHONY: all install headers libraries static dynamic clean
 
 .SILENT: clean
