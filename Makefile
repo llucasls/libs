@@ -31,14 +31,17 @@ $(HEADERS): $(HEADERS_DIR)/%: headers/% | $(HEADERS_DIR)
 $(OBJECTS): $(LIB_DIR)/%: lib/%
 	install $(GROUP) -m $(call GET_MODE,$@) -D $< $@
 
-$(STATIC_OBJECTS): lib/%.o: src/%.c
+$(STATIC_OBJECTS): lib/%.o: src/%.c | lib
 	$(CC) $(CFLAGS) $(STATIC_FLAGS) -o $@ $<
 
-$(SHARED_OBJECTS): lib/lib%.so: src/%.c
+$(SHARED_OBJECTS): lib/lib%.so: src/%.c | lib
 	$(CC) $(CFLAGS) $(DYNAMIC_FLAGS) -o $@ $<
 
 $(HEADERS_DIR):
 	install $(GROUP) -m 775 -d $@
+
+lib:
+	@mkdir lib
 
 clean:
 	if test -n "$(STATIC_OBJECTS)"; then rm -f $(STATIC_OBJECTS); fi
